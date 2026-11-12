@@ -1,0 +1,1910 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>HORIZON COAST: REALISTIC HIGHWAY RACER</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent-blue: #0088ff;
+      --accent-gold: #ffb703;
+      --accent-red: #e63946;
+      --accent-green: #2a9d8f;
+      --panel-bg: rgba(15, 23, 42, 0.88);
+      --glass-border: rgba(255, 255, 255, 0.2);
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      margin: 0;
+      padding: 0;
+      touch-action: none;
+      -webkit-touch-callout: none;
+    }
+
+    body {
+      background: #0f172a;
+      color: #fff;
+      font-family: 'Rajdhani', sans-serif;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: fixed;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      background: #87ceeb;
+      overflow: hidden;
+    }
+
+    #render-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 1;
+    }
+
+    /* ================= GLASS UI PANELS ================= */
+    .screen-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      pointer-events: none;
+      padding: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .interactive {
+      pointer-events: auto;
+    }
+
+    .hidden {
+      display: none !important;
+      opacity: 0;
+      pointer-events: none !important;
+    }
+
+    .glass-card {
+      background: var(--panel-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      border-radius: 18px;
+      padding: 24px;
+      position: relative;
+    }
+
+    /* ================= BUTTONS ================= */
+    .cyber-btn {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      padding: 13px 26px;
+      background: linear-gradient(135deg, #0077b6, #0096c7);
+      border: 1px solid #90e0ef;
+      color: #fff;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0, 119, 182, 0.4);
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .cyber-btn:hover {
+      background: linear-gradient(135deg, #0096c7, #48cae4);
+      color: #000;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(72, 202, 228, 0.6);
+    }
+
+    .cyber-btn-orange {
+      background: linear-gradient(135deg, #e76f51, #f4a261);
+      border-color: #f4a261;
+      box-shadow: 0 4px 20px rgba(231, 111, 81, 0.4);
+    }
+    .cyber-btn-orange:hover {
+      background: linear-gradient(135deg, #f4a261, #e9c46a);
+      color: #000;
+    }
+
+    /* ================= HUD ================= */
+    .hud-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      padding-top: env(safe-area-inset-top, 0px);
+    }
+
+    .stat-badge {
+      font-family: 'Orbitron', sans-serif;
+      display: flex;
+      flex-direction: column;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(8px);
+      padding: 8px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .stat-label {
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      color: #90e0ef;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .stat-val {
+      font-size: 20px;
+      font-weight: 900;
+      color: #fff;
+    }
+
+    .speedo-cluster {
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.9));
+      padding: 10px 20px;
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      text-align: center;
+      min-width: 150px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    .speed-number {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 38px;
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1;
+      text-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+    }
+
+    .nos-track {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+      margin-top: 6px;
+      overflow: hidden;
+    }
+
+    .nos-fill {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #0077b6, #00f3ff);
+      box-shadow: 0 0 10px #00f3ff;
+      transition: width 0.1s linear;
+    }
+
+    /* ================= GARAGE & SELECTOR ================= */
+    .garage-panel {
+      position: absolute;
+      bottom: 20px;
+      bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+      left: 50%;
+      transform: translateX(-50%);
+      width: 95%;
+      max-width: 860px;
+      pointer-events: auto;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    .car-cards-scroll {
+      display: flex;
+      gap: 14px;
+      overflow-x: auto;
+      padding: 10px 2px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent-blue) transparent;
+    }
+
+    .car-card-visual {
+      flex: 0 0 200px;
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(30, 41, 59, 0.8);
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .car-card-visual.active {
+      border-color: #00f3ff;
+      background: rgba(0, 119, 182, 0.35);
+      box-shadow: 0 0 22px rgba(0, 243, 255, 0.45);
+      transform: translateY(-4px);
+    }
+
+    .car-preview-canvas {
+      width: 100%;
+      height: 90px;
+      border-radius: 10px;
+      background: linear-gradient(180deg, #64748b, #334155);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .color-swatches {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+
+    .swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      transition: transform 0.2s;
+    }
+    .swatch.active {
+      transform: scale(1.22);
+      border-color: #00f3ff;
+      box-shadow: 0 0 14px #00f3ff;
+    }
+
+    /* ================= MOBILE CONTROLS ================= */
+    .mobile-gamepad {
+      position: absolute;
+      bottom: 20px;
+      bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+      left: 0;
+      width: 100%;
+      display: flex !important;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding: 0 16px;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    .dpad-cluster, .pedal-cluster {
+      display: flex;
+      gap: 12px;
+      pointer-events: auto;
+    }
+
+    .pedal-cluster {
+      align-items: flex-end;
+    }
+
+    .touch-btn {
+      width: 58px;
+      height: 58px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 2px solid #38bdf8;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+      font-size: 24px;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(8px);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.08s, background 0.08s;
+    }
+
+    .touch-btn.pressed {
+      background: #38bdf8;
+      color: #000;
+      transform: scale(0.92);
+      box-shadow: 0 0 25px #38bdf8;
+    }
+
+    .pedal-btn {
+      width: 54px;
+      height: 68px;
+      border-radius: 14px;
+      font-size: 10px;
+      letter-spacing: 1px;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .gas-btn {
+      border-color: #2ec4b6;
+      box-shadow: 0 0 15px rgba(46, 196, 182, 0.3);
+    }
+    .gas-btn.pressed {
+      background: #2ec4b6;
+      color: #000;
+      box-shadow: 0 0 25px #2ec4b6;
+    }
+
+    .brake-btn {
+      border-color: #e63946;
+      box-shadow: 0 0 15px rgba(230, 57, 70, 0.3);
+    }
+    .brake-btn.pressed {
+      background: #e63946;
+      color: #fff;
+      box-shadow: 0 0 25px #e63946;
+    }
+
+    .nitro-touch-btn {
+      width: 48px;
+      height: 48px;
+      border-color: #ffb703;
+      font-size: 11px;
+      margin-bottom: 6px;
+    }
+    .nitro-touch-btn.pressed {
+      background: #ffb703;
+      color: #000;
+      box-shadow: 0 0 25px #ffb703;
+    }
+
+    @media (max-width: 480px) {
+      .touch-btn { width: 50px; height: 50px; font-size: 20px; }
+      .pedal-btn { width: 48px; height: 62px; font-size: 9px; }
+      .nitro-touch-btn { width: 44px; height: 44px; font-size: 10px; }
+      .dpad-cluster, .pedal-cluster { gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="game-container">
+  <!-- Ultra-Bright 2.5D Realistic Canvas Engine -->
+  <canvas id="render-canvas"></canvas>
+
+  <!-- 1. MAIN MENU -->
+  <div id="menuScreen" class="screen-overlay interactive">
+    <div style="margin: auto; max-width: 580px; text-align: center;" class="glass-card">
+      <div style="font-size:12px; letter-spacing:4px; color:#ffb703; font-weight:800; margin-bottom:6px;">
+        COASTAL HIGHWAY RACING TOUR
+      </div>
+      <h1 style="font-family:'Orbitron'; font-size:clamp(30px, 6vw, 48px); font-weight:900; background:linear-gradient(180deg, #ffffff 30%, #90e0ef 70%, #0077b6 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; letter-spacing:2px; filter:drop-shadow(0 4px 15px rgba(0,119,182,0.5));">
+        HORIZON COAST
+      </h1>
+      <p style="color:#cbd5e1; font-size:14px; margin:16px 0 24px; line-height:1.5;">
+        Perlumbaan lebuh raya pesisir pantai & pergunungan yang cerah, realistik dan beralun. Pilih jentera lumba kegemaran anda, rasai hembusan angin laut dan kelajuan tanpa had!
+      </p>
+
+      <div style="display:flex; justify-content:center; gap:14px; flex-wrap:wrap;">
+        <button class="cyber-btn" id="btnPlay">⚡ MULA BERLUMBA</button>
+        <button class="cyber-btn" id="btnLevels" style="background:linear-gradient(135deg, #2a9d8f, #52b788); border-color:#52b788;">🏆 PILIH LEVEL</button>
+        <button class="cyber-btn cyber-btn-orange" id="btnGarage">🏎️ GARAGE & TREK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1.5 LEVEL SELECTOR SCREEN -->
+  <div id="levelScreen" class="screen-overlay hidden interactive">
+    <div style="margin: auto; width: 95%; max-width: 780px;" class="glass-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <div>
+          <div class="stat-label">MOD KERJAYA / KEMPEN</div>
+          <h2 style="font-family:'Orbitron'; font-size:24px; color:#fff;">PILIH LEVEL PERLUMBAAN</h2>
+        </div>
+        <button class="cyber-btn cyber-btn-orange" id="btnBackFromLevels" style="padding:6px 14px; font-size:11px;">KEMBALI</button>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:12px; max-height:60vh; overflow-y:auto; padding:4px;" id="levelsContainer"></div>
+    </div>
+  </div>
+
+  <!-- 2. GARAGE & TRACK SELECTOR -->
+  <div id="garageScreen" class="screen-overlay hidden interactive">
+    <!-- Top Bar -->
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div class="stat-badge">
+        <span class="stat-label">SHOWROOM</span>
+        <span class="stat-val" style="color:#90e0ef; font-size:20px;">RACE GARAGE</span>
+      </div>
+      <div class="stat-badge" style="text-align:right;">
+        <span class="stat-label">DOMESTIC PRIZE</span>
+        <span class="stat-val" style="color:#ffb703;" id="garageCredits">$50,000</span>
+      </div>
+    </div>
+
+    <!-- Garage Bottom Carousel -->
+    <div class="garage-panel glass-card">
+      <div class="stat-label">1. PILIH JENTERA RACING</div>
+      <div class="car-cards-scroll" id="carCardsContainer"></div>
+
+      <!-- TRACK SELECTOR -->
+      <div style="margin-top:14px;">
+        <div class="stat-label">2. PILIH SUASANA LALUAN & PEMANDANGAN</div>
+        <div style="display:flex; gap:10px; margin-top:6px; overflow-x:auto; padding-bottom:6px;" id="trackSelectorContainer"></div>
+      </div>
+
+      <!-- Colors -->
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:14px; flex-wrap:wrap; gap:12px;">
+        <div>
+          <div class="stat-label">WARNA CAT KERETA</div>
+          <div class="color-swatches" id="garageColorList"></div>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+          <button class="cyber-btn cyber-btn-orange" id="btnBackMenu">MENU</button>
+          <button class="cyber-btn" id="btnGarageRace">⚡ PANDU SEKARANG</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. IN-GAME HUD -->
+  <div id="gameHUD" class="screen-overlay hidden">
+    <div class="hud-top">
+      <div class="stat-badge">
+        <span class="stat-label" id="hudLevelLabel">LEVEL 1</span>
+        <span class="stat-val" id="hudDistance">0 m</span>
+      </div>
+
+      <div class="stat-badge" style="text-align: center; min-width: 140px;">
+        <span class="stat-label">GOAL PROGRESS</span>
+        <div style="width:100%; height:6px; background:rgba(255,255,255,0.2); border-radius:3px; margin:4px 0; overflow:hidden;">
+          <div id="hudLevelProgressBar" style="width:0%; height:100%; background:linear-gradient(90deg, #ffb703, #2ec4b6);"></div>
+        </div>
+        <span id="hudTargetText" style="font-size:10px; color:#90e0ef;">TARGET: 1000m</span>
+      </div>
+
+      <div class="stat-badge" style="text-align: right;">
+        <span class="stat-label">SCORE / CASH</span>
+        <div style="display:flex; gap:6px; align-items:baseline; justify-content:flex-end;">
+          <span style="font-size:13px; color:#ffb703;" id="hudScore">0</span>
+          <span class="stat-val" style="color:#2a9d8f; font-size:17px;" id="hudCash">$0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Speedometer -->
+    <div style="display:flex; justify-content:center; width:100%; margin-bottom:95px; pointer-events:none;">
+      <div class="speedo-cluster">
+        <div style="font-size:10px; color:#90e0ef; letter-spacing:1px; font-weight:bold;" id="hudCarName">NISSAN GT-R</div>
+        <div class="speed-number" id="hudSpeed">0</div>
+        <div style="font-size:10px; letter-spacing:2px; color:#90e0ef;">KM/H</div>
+        <div class="nos-track">
+          <div class="nos-fill" id="hudNosBar"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- On-Screen Touch Gamepad for Smartphone -->
+  <div class="mobile-gamepad hidden" id="mobileControls">
+    <div class="dpad-cluster">
+      <button class="touch-btn" id="touchLeft" aria-label="Steer Left">◀</button>
+      <button class="touch-btn" id="touchRight" aria-label="Steer Right">▶</button>
+    </div>
+
+    <div class="pedal-cluster">
+      <button class="touch-btn nitro-touch-btn" id="touchNos" aria-label="Nitrous">NOS</button>
+      <button class="touch-btn pedal-btn brake-btn" id="touchBrake" aria-label="Brake">
+        <span>🛑</span>
+        <span>BRK</span>
+      </button>
+      <button class="touch-btn pedal-btn gas-btn" id="touchGas" aria-label="Gas">
+        <span>⚡</span>
+        <span>GAS</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 4. GAME OVER SCREEN -->
+  <div id="gameOverScreen" class="screen-overlay hidden interactive">
+    <div style="margin:auto; max-width:460px; text-align:center;" class="glass-card">
+      <h2 style="font-family:'Orbitron'; color:#e63946; font-size:32px; letter-spacing:2px;">KEMALANGAN!</h2>
+      <p style="color:#cbd5e1; font-size:14px; margin:8px 0 20px;">Kenderaan anda terbabas setelah berlanggar dengan trafik lebuh raya.</p>
+
+      <div style="background:rgba(15,23,42,0.6); border-radius:12px; padding:15px; margin-bottom:20px; display:flex; justify-content:space-around;">
+        <div>
+          <div class="stat-label">JARAK DICAPAI</div>
+          <div class="stat-val" id="resDistance" style="font-size:20px;">0 m</div>
+        </div>
+        <div>
+          <div class="stat-label">GANJARAN WANG</div>
+          <div class="stat-val" id="resCash" style="font-size:20px; color:#2ec4b6;">+$0</div>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:center; gap:12px;">
+        <button class="cyber-btn" id="btnRestart">CUBA LAGI</button>
+        <button class="cyber-btn" id="btnGameOverLevels" style="background:linear-gradient(135deg, #2a9d8f, #52b788); border-color:#52b788;">LEVEL</button>
+        <button class="cyber-btn cyber-btn-orange" id="btnGameOverGarage">GARAGE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. LEVEL VICTORY SCREEN -->
+  <div id="victoryScreen" class="screen-overlay hidden interactive">
+    <div style="margin:auto; max-width:480px; text-align:center;" class="glass-card">
+      <div style="font-size:38px;">🏆</div>
+      <h2 style="font-family:'Orbitron'; color:#ffb703; font-size:30px; letter-spacing:2px; margin-top:6px;">LEVEL SELESAI!</h2>
+      <p style="color:#cbd5e1; font-size:14px; margin:6px 0 16px;" id="victoryMsg">Anda berjaya menamatkan misi peringkat ini!</p>
+
+      <div style="background:rgba(15,23,42,0.7); border-radius:14px; padding:16px; margin-bottom:20px; display:flex; justify-content:space-around;">
+        <div>
+          <div class="stat-label">BONUS JUARA</div>
+          <div class="stat-val" id="victoryReward" style="font-size:22px; color:#2ec4b6;">+$3,000</div>
+        </div>
+        <div>
+          <div class="stat-label">STATUS</div>
+          <div class="stat-val" style="font-size:18px; color:#ffb703;">TERBUKA ⭐</div>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
+        <button class="cyber-btn" id="btnNextLevel">LEVEL SETERUSNYA ▶</button>
+        <button class="cyber-btn cyber-btn-orange" id="btnVictoryGarage">🏎️ GARAGE</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/**
+ * HORIZON COAST: REALISTIC CURVED ROAD RACER ENGINE
+ * Ultra-Bright visuals with rolling mountains, coastal ocean, realistic road undulations & traffic
+ */
+
+// ================= AUDIO ENGINE (Web Audio API) =================
+class SoundFX {
+  constructor() {
+    this.ctx = null;
+    this.engineOsc = null;
+    this.engineGain = null;
+  }
+  init() {
+    if (this.ctx) return;
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    this.ctx = new AudioCtx();
+
+    this.engineOsc = this.ctx.createOscillator();
+    this.engineGain = this.ctx.createGain();
+    this.engineOsc.type = 'sawtooth';
+    this.engineOsc.frequency.setValueAtTime(45, this.ctx.currentTime);
+    this.engineGain.gain.setValueAtTime(0.001, this.ctx.currentTime);
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(450, this.ctx.currentTime);
+
+    this.engineOsc.connect(filter);
+    filter.connect(this.engineGain);
+    this.engineGain.connect(this.ctx.destination);
+    this.engineOsc.start();
+  }
+  playCheer() {
+    if (!this.ctx) return;
+    const notes = [523.25, 659.25, 783.99, 1046.50]; // C Major arpeggio
+    notes.forEach((freq, idx) => {
+      const now = this.ctx.currentTime + (idx * 0.1);
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.35);
+    });
+  }
+  updateEngine(speed, maxSpeed, isNos) {
+    if (!this.ctx) return;
+    const ratio = Math.min(speed / maxSpeed, 1.3);
+    const targetFreq = isNos ? 90 + (ratio * 160) : 45 + (ratio * 125);
+    this.engineOsc.frequency.setTargetAtTime(targetFreq, this.ctx.currentTime, 0.05);
+    this.engineGain.gain.setTargetAtTime(0.04 + (ratio * 0.06), this.ctx.currentTime, 0.05);
+  }
+  playPurge() {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(700, now);
+    osc.frequency.exponentialRampToValueAtTime(160, now + 0.28);
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.linearRampToValueAtTime(0.001, now + 0.28);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.28);
+  }
+  playCrash() {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(100, now);
+    osc.frequency.exponentialRampToValueAtTime(25, now + 0.45);
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.linearRampToValueAtTime(0.001, now + 0.45);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.45);
+  }
+}
+
+// ================= RACING CAR DATABASE =================
+const CAR_DATABASE = [
+  {
+    id: 'gtr_apex',
+    name: 'NISSAN GT-R R35',
+    type: 'Twin-Turbo AWD Supercar',
+    baseSpeed: 230,
+    handling: 1.15,
+    accel: 75,
+    cost: 0,
+    unlocked: true,
+    style: 'coupe'
+  },
+  {
+    id: 'satria_neo',
+    name: 'PROTON SATRIA NEO CPS',
+    type: '1.6 Turbo Pocket Rocket',
+    baseSpeed: 215,
+    handling: 1.35,
+    accel: 85,
+    cost: 10000,
+    unlocked: true,
+    style: 'hatch'
+  },
+  {
+    id: 'lambo_evo',
+    name: 'HURACAN PERFORMANTE',
+    type: 'V10 Naturally Aspirated',
+    baseSpeed: 265,
+    handling: 1.25,
+    accel: 95,
+    cost: 25000,
+    unlocked: false,
+    style: 'hyper'
+  },
+  {
+    id: 'gt3_rs',
+    name: 'PORSCHE 911 GT3 RS',
+    type: 'Track Weapon Precision',
+    baseSpeed: 280,
+    handling: 1.4,
+    accel: 105,
+    cost: 45000,
+    unlocked: false,
+    style: 'porsche'
+  }
+];
+
+const BODY_COLORS = [
+  '#e63946', // Merah Lumba
+  '#0088ff', // Biru Cerah
+  '#ffb703', // Kuning Emas
+  '#ffffff', // Putih Mutiara
+  '#2a9d8f', // Hijau Zamrud
+  '#8338ec', // Ungu Diraja
+  '#1e293b'  // Hitam Arang
+];
+
+// ================= LEVEL CAMPAIGN DATABASE =================
+const LEVELS_DATABASE = [
+  {
+    id: 1,
+    name: 'STAGE 1: COASTAL NOVICE',
+    subtitle: 'Pemanasan Enjin di Pesisir Pantai',
+    targetDistance: 1000,
+    trackId: 'track_coastal',
+    trafficCount: 4,
+    trafficSpeedMin: 70,
+    trafficSpeedMax: 100,
+    reward: 3000,
+    unlocked: true
+  },
+  {
+    id: 2,
+    name: 'STAGE 2: PALM BREEZE RUSH',
+    subtitle: 'Kelajuan Mula Memuncak',
+    targetDistance: 1800,
+    trackId: 'track_coastal',
+    trafficCount: 6,
+    trafficSpeedMin: 85,
+    trafficSpeedMax: 120,
+    reward: 6000,
+    unlocked: false
+  },
+  {
+    id: 3,
+    name: 'STAGE 3: HIGHLAND FOG CLIMB',
+    subtitle: 'Mendaki Banjaran & Selekoh Sempit',
+    targetDistance: 2600,
+    trackId: 'track_highland',
+    trafficCount: 7,
+    trafficSpeedMin: 90,
+    trafficSpeedMax: 135,
+    reward: 10000,
+    unlocked: false
+  },
+  {
+    id: 4,
+    name: 'STAGE 4: RIDGE MOUNTAIN APEX',
+    subtitle: 'Trafik Agresif di Laluan Cerun',
+    targetDistance: 3600,
+    trackId: 'track_highland',
+    trafficCount: 8,
+    trafficSpeedMin: 100,
+    trafficSpeedMax: 150,
+    reward: 16000,
+    unlocked: false
+  },
+  {
+    id: 5,
+    name: 'STAGE 5: SUNSET CAUSEWAY APEX',
+    subtitle: 'Cabaran Puncak Kelajuan Terakhir',
+    targetDistance: 5000,
+    trackId: 'track_sunset',
+    trafficCount: 10,
+    trafficSpeedMin: 115,
+    trafficSpeedMax: 165,
+    reward: 25000,
+    unlocked: false
+  }
+];
+
+// ================= TRACKS & REALISTIC ENVIRONMENTS =================
+const TRACK_DATABASE = [
+  {
+    id: 'track_coastal',
+    name: 'DESARU COASTAL HIGHWAY',
+    subtitle: 'Laut Biru Cerah & Pokok Kelapa',
+    icon: '🌊',
+    skyTop: '#1e90ff',
+    skyBottom: '#b0e0e6',
+    mountainColor1: '#2d6a4f',
+    mountainColor2: '#40916c',
+    hasOcean: true,
+    oceanColor: '#0077b6',
+    grassLight: '#70e000',
+    grassDark: '#38b000',
+    roadColor: '#334155',
+    curbRed: '#e63946',
+    curbWhite: '#ffffff',
+    stripeColor: '#ffffff',
+    treeType: 'palm'
+  },
+  {
+    id: 'track_highland',
+    name: 'CAMERON HIGHLAND PASS',
+    subtitle: 'Banjaran Bukit Beralun & Hutan Tropika',
+    icon: '⛰️',
+    skyTop: '#48cae4',
+    skyBottom: '#caf0f8',
+    mountainColor1: '#1b4332',
+    mountainColor2: '#2d6a4f',
+    hasOcean: false,
+    grassLight: '#52b788',
+    grassDark: '#2d6a4f',
+    roadColor: '#2b303a',
+    curbRed: '#e76f51',
+    curbWhite: '#ffffff',
+    stripeColor: '#ffdd00',
+    treeType: 'pine'
+  },
+  {
+    id: 'track_sunset',
+    name: 'PENANG SUNSET BRIDGE',
+    subtitle: 'Pantulan Cahaya Senja di Atas Selat',
+    icon: '🌅',
+    skyTop: '#f72585',
+    skyBottom: '#ffb703',
+    mountainColor1: '#5c2751',
+    mountainColor2: '#8b3d68',
+    hasOcean: true,
+    oceanColor: '#bf4342',
+    grassLight: '#d4a373',
+    grassDark: '#bc6c25',
+    roadColor: '#3a3335',
+    curbRed: '#ffb703',
+    curbWhite: '#ffffff',
+    stripeColor: '#ffffff',
+    treeType: 'palm'
+  }
+];
+
+const UserProfile = {
+  credits: 25000,
+  selectedCarId: 'gtr_apex',
+  carColor: '#0088ff',
+  selectedTrackId: 'track_coastal',
+  currentLevelId: 1
+};
+
+// ================= PSEUDO-3D CURVED ROAD ENGINE =================
+const canvas = document.getElementById('render-canvas');
+const ctx = canvas.getContext('2d');
+
+let width = window.innerWidth;
+let height = window.innerHeight;
+
+function resizeCanvas() {
+  width = window.innerWidth;
+  height = window.innerHeight;
+  canvas.width = width;
+  canvas.height = height;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// Road Segment Setup
+const roadSegments = [];
+const segmentLength = 200; // Panjang satu segmen dalam unit dunia
+const totalSegments = 1600; // Jumlah panjang kitaran jalan
+const roadWidth = 2400; // Lebar jalan 3-4 lorong
+const cameraHeight = 1100;
+const drawDistance = 240; // Berapa banyak segmen dilukis ke horizon
+const fieldOfView = 100;
+
+function resetRoad() {
+  roadSegments.length = 0;
+  for (let i = 0; i < totalSegments; i++) {
+    // Cipta selekoh dan bukit beralun yang realistik
+    const curve = (i > 200 && i < 450) ? Math.sin((i - 200) / 40) * 3.5 :
+                  (i > 700 && i < 1000) ? Math.cos((i - 700) / 50) * -4.2 :
+                  (i > 1200 && i < 1450) ? Math.sin((i - 1200) / 30) * 2.8 : 0;
+
+    const hill = (i > 100 && i < 350) ? Math.sin((i - 100) / 30) * 1200 :
+                 (i > 500 && i < 850) ? Math.cos((i - 500) / 40) * 1600 :
+                 (i > 1050 && i < 1350) ? Math.sin((i - 1050) / 35) * -1100 : 0;
+
+    // Sprite tepi jalan (pokok, tiang lampu, papan tanda)
+    let sprite = null;
+    if (i % 18 === 0) {
+      sprite = {
+        type: 'tree',
+        side: (i % 36 === 0) ? -1.45 : 1.45,
+        offset: (i % 36 === 0) ? -1.45 : 1.45
+      };
+    } else if (i % 45 === 0) {
+      sprite = {
+        type: 'lamp',
+        side: -1.25,
+        offset: -1.25
+      };
+    }
+
+    roadSegments.push({
+      index: i,
+      p1: { world: { y: hill, z: i * segmentLength }, camera: {}, screen: {} },
+      p2: { world: { y: hill, z: (i + 1) * segmentLength }, camera: {}, screen: {} },
+      curve: curve,
+      sprite: sprite
+    });
+  }
+}
+resetRoad();
+
+// ================= TRAFFIC SIMULATION =================
+let trafficCars = [];
+
+function initTrafficForCurrentLevel() {
+  const currentLvl = LEVELS_DATABASE.find(l => l.id === UserProfile.currentLevelId) || LEVELS_DATABASE[0];
+  trafficCars = [];
+  const styles = ['coupe', 'hatch', 'porsche', 'hyper'];
+  const colors = ['#e63946', '#ffffff', '#ffb703', '#2a9d8f', '#1e293b', '#8338ec'];
+  const lanes = [-0.65, -0.25, 0.25, 0.65];
+
+  for (let i = 0; i < currentLvl.trafficCount; i++) {
+    const lane = lanes[i % lanes.length];
+    const spd = currentLvl.trafficSpeedMin + Math.random() * (currentLvl.trafficSpeedMax - currentLvl.trafficSpeedMin);
+    trafficCars.push({
+      z: 1400 + (i * 1250) + Math.random() * 600,
+      x: lane,
+      speed: spd,
+      color: colors[i % colors.length],
+      style: styles[i % styles.length]
+    });
+  }
+}
+
+// ================= GAME ENGINE STATE =================
+let gameActive = false;
+let inGarageMode = false;
+let playerPositionZ = 0;
+let playerX = 0; // -1 (tepi kiri) hingga +1 (tepi kanan)
+let speed = 40;
+let baseMaxSpeed = 230;
+let nitroFuel = 100;
+let nitroActive = false;
+let distanceTraveled = 0;
+let score = 0;
+let earnedCash = 0;
+let hillsScrollOffset = 0;
+let skyScrollOffset = 0;
+let levelCompleted = false;
+
+const keys = { left: false, right: false, gas: false, brake: false, nos: false };
+const sfx = new SoundFX();
+
+// Project 3D World to 2D Screen Coordinates
+function project(p, cameraX, cameraY, cameraZ, cameraDepth) {
+  p.camera.x = (p.world.x || 0) - cameraX;
+  p.camera.y = (p.world.y || 0) - cameraY;
+  p.camera.z = (p.world.z || 0) - cameraZ;
+
+  if (p.camera.z <= 0) {
+    p.screen.scale = 0;
+    return;
+  }
+
+  p.screen.scale = cameraDepth / p.camera.z;
+  p.screen.x = Math.round((width / 2) + (p.screen.scale * p.camera.x * width / 2));
+  p.screen.y = Math.round((height / 2) - (p.screen.scale * p.camera.y * height / 2));
+  p.screen.w = Math.round((p.screen.scale * roadWidth * width / 2));
+}
+
+// Draw Polygon Strip for Road and Grass
+function drawPolygon(x1, y1, x2, y2, x3, y3, x4, y4, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.lineTo(x3, y3);
+  ctx.lineTo(x4, y4);
+  ctx.closePath();
+  ctx.fill();
+}
+
+// ================= RENDER REALISTIC BACKGROUND =================
+function renderScenery(track, playerCurve) {
+  // 1. SKY GRADIENT (Cerah dan bertenaga)
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, height * 0.55);
+  skyGrad.addColorStop(0, track.skyTop);
+  skyGrad.addColorStop(1, track.skyBottom);
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, width, height * 0.55);
+
+  // Awan cerah gebu (Fluffy Clouds)
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+  for (let c = 0; c < 5; c++) {
+    const cx = ((c * 340 + skyScrollOffset * 0.4) % (width + 300)) - 150;
+    const cy = 40 + (c % 2) * 35;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 38, 0, Math.PI * 2);
+    ctx.arc(cx + 35, cy - 10, 48, 0, Math.PI * 2);
+    ctx.arc(cx + 75, cy, 35, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // 2. MATAHARI CERAH / SENJA
+  ctx.save();
+  if (track.id === 'track_sunset') {
+    const sunGrad = ctx.createRadialGradient(width * 0.65, height * 0.38, 5, width * 0.65, height * 0.38, 85);
+    sunGrad.addColorStop(0, '#ffffff');
+    sunGrad.addColorStop(0.3, '#ffbe0b');
+    sunGrad.addColorStop(1, 'rgba(255, 0, 110, 0)');
+    ctx.fillStyle = sunGrad;
+    ctx.beginPath();
+    ctx.arc(width * 0.65, height * 0.38, 85, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    // Matahari siang cerah
+    const sunGrad = ctx.createRadialGradient(width * 0.25, 60, 10, width * 0.25, 60, 90);
+    sunGrad.addColorStop(0, '#ffffff');
+    sunGrad.addColorStop(0.35, '#fff3b0');
+    sunGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = sunGrad;
+    ctx.beginPath();
+    ctx.arc(width * 0.25, 60, 90, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // 3. LAUTAN BIRU DI PESISIR (Jika trek tepi pantai)
+  if (track.hasOcean) {
+    const oceanHeight = height * 0.22;
+    const oceanTop = height * 0.34;
+    const oceanGrad = ctx.createLinearGradient(0, oceanTop, 0, oceanTop + oceanHeight);
+    oceanGrad.addColorStop(0, track.oceanColor);
+    oceanGrad.addColorStop(1, '#00b4d8');
+    ctx.fillStyle = oceanGrad;
+    ctx.fillRect(0, oceanTop, width, oceanHeight);
+
+    // Kilauan air laut (wave gleams)
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+    ctx.lineWidth = 1.5;
+    for (let w = 0; w < 6; w++) {
+      const wy = oceanTop + 15 + w * 18;
+      ctx.beginPath();
+      ctx.moveTo(0, wy);
+      ctx.bezierCurveTo(width * 0.3, wy + Math.sin(w + hillsScrollOffset * 0.01) * 6, width * 0.7, wy - 4, width, wy);
+      ctx.stroke();
+    }
+  }
+
+  // 4. BANJARAN BUKIT & GUNUNG BERALUN (Layered Rolling Hills)
+  // Layer 1: Bukit Belakang (Jauh)
+  ctx.fillStyle = track.mountainColor1;
+  ctx.beginPath();
+  ctx.moveTo(0, height * 0.52);
+  for (let x = 0; x <= width; x += 40) {
+    const hillY = (height * 0.33) + Math.sin((x + hillsScrollOffset * 0.2) * 0.005) * 60 + Math.cos((x + hillsScrollOffset * 0.15) * 0.008) * 35;
+    ctx.lineTo(x, hillY);
+  }
+  ctx.lineTo(width, height * 0.55);
+  ctx.lineTo(0, height * 0.55);
+  ctx.closePath();
+  ctx.fill();
+
+  // Layer 2: Bukit Hadapan (Dekat & Cerah)
+  ctx.fillStyle = track.mountainColor2;
+  ctx.beginPath();
+  ctx.moveTo(0, height * 0.55);
+  for (let x = 0; x <= width; x += 30) {
+    const hillY = (height * 0.40) + Math.cos((x + hillsScrollOffset * 0.45) * 0.008) * 45 + Math.sin((x + hillsScrollOffset * 0.3) * 0.012) * 25;
+    ctx.lineTo(x, hillY);
+  }
+  ctx.lineTo(width, height * 0.55);
+  ctx.lineTo(0, height * 0.55);
+  ctx.closePath();
+  ctx.fill();
+}
+
+// ================= LUKIS KERETA DENGAN IMEJ REALISTIK =================
+function renderCarSprite(x, y, scale, colorHex, isPlayer = false, tilt = 0, style = 'coupe') {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+
+  const carW = 280;
+  const carH = 150;
+
+  // 1. Bayang Kereta di Atas Jalan Tar (Realistic Soft Drop Shadow)
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+  ctx.beginPath();
+  ctx.ellipse(0, 10, carW * 0.54, 22, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 2. Condong Badan Semasa Selekoh (Steering Roll)
+  ctx.rotate(tilt * 0.2);
+
+  // 3. Tayar Belakang (Tough Sport Tires)
+  ctx.fillStyle = '#111827';
+  // Tayar Kiri
+  ctx.beginPath();
+  ctx.roundRect(-carW * 0.48, -26, 42, 60, 8);
+  ctx.fill();
+  // Tayar Kanan
+  ctx.beginPath();
+  ctx.roundRect(carW * 0.48 - 42, -26, 42, 60, 8);
+  ctx.fill();
+
+  // Rim Sukan Berkilat (Sport Alloy Rims)
+  ctx.fillStyle = '#94a3b8';
+  ctx.beginPath();
+  ctx.arc(-carW * 0.48 + 21, 4, 14, 0, Math.PI * 2);
+  ctx.arc(carW * 0.48 - 21, 4, 14, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 4. Badan Utama Kereta (Aerodynamic Realistic Sports Chassis)
+  const bodyGrad = ctx.createLinearGradient(0, -carH * 0.7, 0, 0);
+  bodyGrad.addColorStop(0, colorHex);
+  bodyGrad.addColorStop(0.5, colorHex);
+  bodyGrad.addColorStop(1, '#0b0f19'); // Teduhan bawah badan
+
+  ctx.fillStyle = bodyGrad;
+  ctx.beginPath();
+  ctx.roundRect(-carW * 0.44, -carH * 0.45, carW * 0.88, carH * 0.48, [14, 14, 8, 8]);
+  ctx.fill();
+
+  // Garis Kilauan Aerodinamik Badan (Body Highlights)
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-carW * 0.4, -carH * 0.42);
+  ctx.lineTo(carW * 0.4, -carH * 0.42);
+  ctx.stroke();
+
+  // 5. Kabin Atas & Cermin Belakang (Rear Windshield)
+  let cabinW = carW * 0.65;
+  let cabinH = carH * 0.38;
+  if (style === 'hatch') {
+    cabinW = carW * 0.72;
+    cabinH = carH * 0.45;
+  }
+
+  // Cermin Kaca Berpantul Langit
+  const glassGrad = ctx.createLinearGradient(0, -carH * 0.8, 0, -carH * 0.4);
+  glassGrad.addColorStop(0, '#64748b');
+  glassGrad.addColorStop(0.5, '#1e293b');
+  glassGrad.addColorStop(1, '#0f172a');
+
+  ctx.fillStyle = glassGrad;
+  ctx.beginPath();
+  ctx.roundRect(-cabinW * 0.5, -carH * 0.75, cabinW, cabinH, [18, 18, 4, 4]);
+  ctx.fill();
+
+  // Pantulan Cahaya Putih Serong di Cermin
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(-cabinW * 0.3, -carH * 0.72);
+  ctx.lineTo(-cabinW * 0.05, -carH * 0.42);
+  ctx.stroke();
+
+  // 6. Spoiler Belakang (GT Rear Wing)
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(-carW * 0.45, -carH * 0.52, carW * 0.9, 10);
+  // Tiang Spoiler
+  ctx.fillRect(-carW * 0.28, -carH * 0.46, 8, 12);
+  ctx.fillRect(carW * 0.28 - 8, -carH * 0.46, 8, 12);
+
+  // 7. Lampu Belakang LED (Taillights Strip)
+  const isBraking = isPlayer && keys.brake;
+  const tailLightColor = isBraking ? '#ff0033' : '#e63946';
+
+  // Glow Lampu
+  ctx.shadowColor = tailLightColor;
+  ctx.shadowBlur = isBraking ? 25 : 12;
+
+  ctx.fillStyle = tailLightColor;
+  // Lampu Kiri
+  ctx.beginPath();
+  ctx.roundRect(-carW * 0.41, -carH * 0.28, 55, 16, 4);
+  ctx.fill();
+  // Lampu Kanan
+  ctx.beginPath();
+  ctx.roundRect(carW * 0.41 - 55, -carH * 0.28, 55, 16, 4);
+  ctx.fill();
+
+  // Strip Lampu Tengah
+  ctx.fillRect(-carW * 0.2, -carH * 0.25, carW * 0.4, 6);
+
+  ctx.shadowBlur = 0; // Reset glow
+
+  // 8. Plat Nombor & Paip Ekzos Lumba (Exhaust Pipes)
+  // Plat
+  ctx.fillStyle = '#ffb703';
+  ctx.fillRect(-28, -carH * 0.16, 56, 16);
+  ctx.fillStyle = '#000';
+  ctx.font = 'bold 9px Orbitron, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('NEO 2099', 0, -carH * 0.06);
+
+  // Ekzos Berkembar
+  ctx.fillStyle = '#475569';
+  ctx.beginPath();
+  ctx.arc(-carW * 0.32, -4, 9, 0, Math.PI * 2);
+  ctx.arc(carW * 0.32, -4, 9, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(-carW * 0.32, -4, 5, 0, Math.PI * 2);
+  ctx.arc(carW * 0.32, -4, 5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 9. Kesan Api Nitro / Ekzos (NOS Fire Boost)
+  if (isPlayer && nitroActive) {
+    ctx.shadowColor = '#00f3ff';
+    ctx.shadowBlur = 20;
+    const fireGrad = ctx.createLinearGradient(0, -4, 0, 40);
+    fireGrad.addColorStop(0, '#ffffff');
+    fireGrad.addColorStop(0.4, '#00f3ff');
+    fireGrad.addColorStop(1, 'rgba(0, 119, 182, 0)');
+    ctx.fillStyle = fireGrad;
+
+    // Api Kiri
+    ctx.beginPath();
+    ctx.moveTo(-carW * 0.32 - 7, -4);
+    ctx.lineTo(-carW * 0.32, 28 + Math.random() * 16);
+    ctx.lineTo(-carW * 0.32 + 7, -4);
+    ctx.fill();
+
+    // Api Kanan
+    ctx.beginPath();
+    ctx.moveTo(carW * 0.32 - 7, -4);
+    ctx.lineTo(carW * 0.32, 28 + Math.random() * 16);
+    ctx.lineTo(carW * 0.32 + 7, -4);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  ctx.restore();
+}
+
+// ================= LUKIS ELEMEN TEPI JALAN (POKOK & TIANG) =================
+function renderRoadsideSprite(sprite, x, y, scale, track) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+
+  if (sprite.type === 'tree') {
+    if (track.treeType === 'palm') {
+      // POHON PALMA / KELAPA PESISIR PANTAI
+      // Batang melengkung
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 20;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(sprite.side * 40, -120, sprite.side * 25, -240);
+      ctx.stroke();
+
+      // Dedaun Kelapa Hijau
+      ctx.fillStyle = '#15803d';
+      const leafCount = 6;
+      for (let l = 0; l < leafCount; l++) {
+        const ang = (l / leafCount) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.ellipse(sprite.side * 25 + Math.cos(ang) * 60, -240 + Math.sin(ang) * 25, 65, 18, ang, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else {
+      // POHON PINUS / HUTAN PERGUNUNGAN
+      // Batang
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(-12, -70, 24, 70);
+
+      // Kon Dedaun Bertingkat
+      ctx.fillStyle = '#166534';
+      ctx.beginPath();
+      ctx.moveTo(-65, -60);
+      ctx.lineTo(0, -170);
+      ctx.lineTo(65, -60);
+      ctx.fill();
+
+      ctx.fillStyle = '#15803d';
+      ctx.beginPath();
+      ctx.moveTo(-50, -130);
+      ctx.lineTo(0, -230);
+      ctx.lineTo(50, -130);
+      ctx.fill();
+    }
+  } else if (sprite.type === 'lamp') {
+    // TIANG LAMPU LEBUH RAYA
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, -220);
+    ctx.lineTo(35, -240);
+    ctx.stroke();
+
+    // Kepala Lampu
+    ctx.fillStyle = '#ffbe0b';
+    ctx.beginPath();
+    ctx.arc(38, -240, 10, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+// ================= RENDER UTAMA (GAME LOOP) =================
+let lastTime = performance.now();
+
+function gameLoop(now) {
+  requestAnimationFrame(gameLoop);
+
+  const dt = Math.min((now - lastTime) / 1000, 0.1);
+  lastTime = now;
+
+  const track = TRACK_DATABASE.find(t => t.id === UserProfile.selectedTrackId) || TRACK_DATABASE[0];
+  const curCar = CAR_DATABASE.find(c => c.id === UserProfile.selectedCarId) || CAR_DATABASE[0];
+
+  if (gameActive) {
+    baseMaxSpeed = curCar.baseSpeed;
+
+    // 1. Kawalan Kelajuan & Nitro
+    if (keys.nos && nitroFuel > 0) {
+      nitroActive = true;
+      speed = Math.min(speed + 140 * dt, baseMaxSpeed * 1.35);
+      nitroFuel = Math.max(0, nitroFuel - 32 * dt);
+    } else {
+      nitroActive = false;
+      if (keys.brake) {
+        speed = Math.max(30, speed - 130 * dt);
+      } else if (keys.gas) {
+        if (speed < baseMaxSpeed) speed += curCar.accel * dt;
+      } else {
+        const cruiseSpeed = 90;
+        if (speed < cruiseSpeed) speed += 30 * dt;
+        if (speed > cruiseSpeed) speed -= 35 * dt;
+      }
+      if (nitroFuel < 100) nitroFuel += 8 * dt;
+    }
+
+    // 2. Stereng
+    const steerForce = 1.35 * curCar.handling;
+    let tilt = 0;
+    if (keys.left) {
+      playerX -= steerForce * dt;
+      tilt = -1;
+    } else if (keys.right) {
+      playerX += steerForce * dt;
+      tilt = 1;
+    }
+    // Hadkan kedudukan di atas jalan
+    playerX = Math.max(-1.15, Math.min(1.15, playerX));
+
+    // Bergerak ke hadapan
+    playerPositionZ += speed * 12 * dt;
+    if (playerPositionZ >= totalSegments * segmentLength) {
+      playerPositionZ -= totalSegments * segmentLength;
+    }
+
+    distanceTraveled += (speed * 0.277) * dt;
+    score += Math.round(speed * dt * 4);
+    earnedCash += (speed * 0.015) * dt;
+
+    sfx.updateEngine(speed, baseMaxSpeed, nitroActive);
+
+    // Update HUD Level & Progress
+    const currentLvl = LEVELS_DATABASE.find(l => l.id === UserProfile.currentLevelId) || LEVELS_DATABASE[0];
+    const progressPct = Math.min(100, (distanceTraveled / currentLvl.targetDistance) * 100);
+
+    const hudSpeedEl = document.getElementById('hudSpeed');
+    const hudDistEl = document.getElementById('hudDistance');
+    const hudScoreEl = document.getElementById('hudScore');
+    const hudCashEl = document.getElementById('hudCash');
+    const hudNosEl = document.getElementById('hudNosBar');
+    const hudProgEl = document.getElementById('hudLevelProgressBar');
+    const hudTargetEl = document.getElementById('hudTargetText');
+
+    if (hudSpeedEl) hudSpeedEl.innerText = Math.round(speed);
+    if (hudDistEl) hudDistEl.innerText = Math.round(distanceTraveled) + ' m';
+    if (hudScoreEl) hudScoreEl.innerText = score;
+    if (hudCashEl) hudCashEl.innerText = '$' + Math.floor(earnedCash);
+    if (hudNosEl) hudNosEl.style.width = Math.round(nitroFuel) + '%';
+    if (hudProgEl) hudProgEl.style.width = progressPct + '%';
+    if (hudTargetEl) hudTargetEl.innerText = `TARGET: ${currentLvl.targetDistance}m (${Math.round(progressPct)}%)`;
+
+    // Semak Kemenangan Level (Finish Line Cross)
+    if (distanceTraveled >= currentLvl.targetDistance && !levelCompleted) {
+      triggerLevelVictory(currentLvl);
+    }
+
+    // 3. Update AI Traffic
+    trafficCars.forEach(t => {
+      t.z += (t.speed * 12) * dt;
+      if (t.z >= totalSegments * segmentLength) {
+        t.z -= totalSegments * segmentLength;
+      }
+
+      // Check Collision Hitbox
+      const dz = Math.abs(t.z - playerPositionZ);
+      const dx = Math.abs(t.x - playerX);
+      if (dz < 180 && dx < 0.28) {
+        triggerGameOver();
+      }
+    });
+
+  } else if (inGarageMode) {
+    // Dalam mode garage, beri pusingan perlahan
+    hillsScrollOffset += 30 * dt;
+  }
+
+  // Cari segmen permulaan kamera
+  const startPos = playerPositionZ;
+  const startSegmentIndex = Math.floor(startPos / segmentLength);
+  const startSegment = roadSegments[startSegmentIndex % totalSegments];
+  const cameraDepth = 1 / Math.tan((fieldOfView / 2) * Math.PI / 180);
+
+  // Parallax Scenery scroll mengikut selekoh jalan
+  const currentCurve = startSegment ? startSegment.curve : 0;
+  hillsScrollOffset += currentCurve * (speed / 20) * dt * 25;
+  skyScrollOffset += currentCurve * (speed / 30) * dt * 10;
+
+  // LUKIS LATAR PEMANDANGAN
+  renderScenery(track, currentCurve);
+
+  // ================= PROJECTION & RENDER JALAN RAYA =================
+  let cameraX = playerX * roadWidth;
+  let cameraY = cameraHeight + (startSegment ? startSegment.p1.world.y : 0);
+  let maxy = height;
+  let x = 0;
+  let dx = -(startSegment ? startSegment.curve * 2 : 0);
+
+  const drawList = [];
+
+  for (let n = 0; n < drawDistance; n++) {
+    const segment = roadSegments[(startSegmentIndex + n) % totalSegments];
+    const looped = segment.index < startSegmentIndex;
+
+    const segCameraZ = startPos - (looped ? totalSegments * segmentLength : 0);
+
+    // Project Point 1
+    segment.p1.world.x = x;
+    project(segment.p1, cameraX, cameraY, segCameraZ, cameraDepth);
+
+    // Project Point 2
+    segment.p2.world.x = x + dx;
+    project(segment.p2, cameraX, cameraY, segCameraZ, cameraDepth);
+
+    x += dx;
+    dx += segment.curve;
+
+    if (segment.p1.camera.z <= cameraDepth || segment.p2.screen.y >= maxy) {
+      continue;
+    }
+
+    // Lukis Bahagian Rumput, Kerb, Jalan dan Lorong
+    const p1 = segment.p1.screen;
+    const p2 = segment.p2.screen;
+
+    const isAlt = (Math.floor(segment.index / 3) % 2 === 0);
+
+    // 1. Rumput tepi jalan (Lush green grass / Coastal sand)
+    const grassCol = isAlt ? track.grassLight : track.grassDark;
+    drawPolygon(0, p1.y, width, p1.y, width, p2.y, 0, p2.y, grassCol);
+
+    // 2. Bahu Jalan / Kerb Timbul (Red/White or Gold/White Racing Kerbs)
+    const curbW1 = p1.w * 1.14;
+    const curbW2 = p2.w * 1.14;
+    const curbCol = isAlt ? track.curbRed : track.curbWhite;
+    drawPolygon(p1.x - curbW1, p1.y, p1.x + curbW1, p1.y, p2.x + curbW2, p2.y, p2.x - curbW2, p2.y, curbCol);
+
+    // 3. Permukaan Jalan Tar Lebuh Raya (Asphalt Deck)
+    drawPolygon(p1.x - p1.w, p1.y, p1.x + p1.w, p1.y, p2.x + p2.w, p2.y, p2.x - p2.w, p2.y, track.roadColor);
+
+    // 4. Pembahagi Lorong Putih/Kuning Beralun (Lane Dividers)
+    if (isAlt) {
+      const laneW1 = p1.w * 0.02;
+      const laneW2 = p2.w * 0.02;
+      // Lorong 1 (Kiri)
+      drawPolygon(p1.x - p1.w * 0.35 - laneW1, p1.y, p1.x - p1.w * 0.35 + laneW1, p1.y, p2.x - p2.w * 0.35 + laneW2, p2.y, p2.x - p2.w * 0.35 - laneW2, p2.y, track.stripeColor);
+      // Lorong 2 (Kanan)
+      drawPolygon(p1.x + p1.w * 0.35 - laneW1, p1.y, p1.x + p1.w * 0.35 + laneW1, p1.y, p2.x + p2.w * 0.35 + laneW2, p2.y, p2.x + p2.w * 0.35 - laneW2, p2.y, track.stripeColor);
+    }
+
+    // 5. Garisan Penamat (Checkered Finish Line) jika dekat sasaran
+    const currentLvl = LEVELS_DATABASE.find(l => l.id === UserProfile.currentLevelId) || LEVELS_DATABASE[0];
+    const distToGoal = currentLvl.targetDistance - distanceTraveled;
+    if (distToGoal > -50 && distToGoal < 250) {
+      const finishSeg = Math.floor((playerPositionZ + (distToGoal / 0.277) * 12) / segmentLength);
+      if (segment.index === (finishSeg % totalSegments)) {
+        // Corak Dam Catur Penamat (Checkered Line)
+        const checkW = (p1.w * 2) / 10;
+        for (let ch = 0; ch < 10; ch++) {
+          const chX = (p1.x - p1.w) + (ch * checkW);
+          const chCol = (ch % 2 === 0) ? '#ffffff' : '#111827';
+          drawPolygon(chX, p1.y, chX + checkW, p1.y, chX + checkW, p2.y, chX, p2.y, chCol);
+        }
+      }
+    }
+
+    maxy = p1.y;
+
+    // Simpan objek tepi jalan untuk dilukis dari jauh ke dekat
+    if (segment.sprite) {
+      drawList.push({
+        type: 'roadside',
+        sprite: segment.sprite,
+        x: p1.x + (segment.sprite.offset * p1.w),
+        y: p1.y,
+        scale: p1.scale * 2.5
+      });
+    }
+
+    // Check Trafik pada segmen ini
+    trafficCars.forEach(t => {
+      const tSeg = Math.floor(t.z / segmentLength);
+      if (tSeg === segment.index) {
+        drawList.push({
+          type: 'car',
+          x: p1.x + (t.x * p1.w),
+          y: p1.y,
+          scale: p1.scale * 3.4,
+          color: t.color,
+          style: t.style
+        });
+      }
+    });
+  }
+
+  // Lukis semua objek & kereta AI dari horizon ke skrin hadapan
+  for (let i = drawList.length - 1; i >= 0; i--) {
+    const item = drawList[i];
+    if (item.type === 'roadside') {
+      renderRoadsideSprite(item.sprite, item.x, item.y, item.scale, track);
+    } else if (item.type === 'car') {
+      renderCarSprite(item.x, item.y, item.scale, item.color, false, 0, item.style);
+    }
+  }
+
+  // ================= LUKIS KERETA PEMAIN (PLAYER CAR) =================
+  if (gameActive) {
+    const playerTilt = keys.left ? -1 : (keys.right ? 1 : 0);
+    renderCarSprite(width / 2, height * 0.88, 1.45, UserProfile.carColor, true, playerTilt, curCar.style);
+  }
+}
+
+// ================= GAME STATES & FLOW =================
+function startRace() {
+  inGarageMode = false;
+  gameActive = true;
+  levelCompleted = false;
+  distanceTraveled = 0;
+  score = 0;
+  earnedCash = 0;
+  speed = 50;
+  nitroFuel = 100;
+  playerX = 0;
+
+  const currentLvl = LEVELS_DATABASE.find(l => l.id === UserProfile.currentLevelId) || LEVELS_DATABASE[0];
+  UserProfile.selectedTrackId = currentLvl.trackId;
+
+  initTrafficForCurrentLevel();
+
+  document.getElementById('menuScreen').classList.add('hidden');
+  document.getElementById('levelScreen').classList.add('hidden');
+  document.getElementById('garageScreen').classList.add('hidden');
+  document.getElementById('gameOverScreen').classList.add('hidden');
+  document.getElementById('victoryScreen').classList.add('hidden');
+  document.getElementById('gameHUD').classList.remove('hidden');
+  document.getElementById('mobileControls').classList.remove('hidden');
+
+  const curCar = CAR_DATABASE.find(c => c.id === UserProfile.selectedCarId);
+  document.getElementById('hudCarName').innerText = curCar.name;
+  document.getElementById('hudLevelLabel').innerText = `LEVEL ${currentLvl.id}`;
+
+  sfx.init();
+}
+
+function triggerLevelVictory(currentLvl) {
+  levelCompleted = true;
+  gameActive = false;
+  sfx.playCheer();
+
+  const totalPrize = currentLvl.reward + Math.floor(earnedCash);
+  UserProfile.credits += totalPrize;
+
+  // Buka level seterusnya jika ada
+  const nextLvl = LEVELS_DATABASE.find(l => l.id === currentLvl.id + 1);
+  if (nextLvl) {
+    nextLvl.unlocked = true;
+  }
+
+  document.getElementById('gameHUD').classList.add('hidden');
+  document.getElementById('mobileControls').classList.add('hidden');
+  document.getElementById('victoryScreen').classList.remove('hidden');
+
+  document.getElementById('victoryMsg').innerText = `Tahniah! Anda berjaya melepasi garisan penamat ${currentLvl.name}!`;
+  document.getElementById('victoryReward').innerText = `+$${totalPrize.toLocaleString()}`;
+
+  const nextBtn = document.getElementById('btnNextLevel');
+  if (nextLvl) {
+    nextBtn.innerText = `LEVEL ${nextLvl.id} ▶`;
+    nextBtn.style.display = 'inline-flex';
+  } else {
+    nextBtn.innerText = `TAHNIAH! JUARA DUNIA`;
+    nextBtn.style.display = 'none';
+  }
+}
+
+function openLevelSelector() {
+  gameActive = false;
+  inGarageMode = false;
+
+  document.getElementById('menuScreen').classList.add('hidden');
+  document.getElementById('garageScreen').classList.add('hidden');
+  document.getElementById('gameOverScreen').classList.add('hidden');
+  document.getElementById('victoryScreen').classList.add('hidden');
+  document.getElementById('levelScreen').classList.remove('hidden');
+
+  renderLevelCards();
+}
+
+function renderLevelCards() {
+  const container = document.getElementById('levelsContainer');
+  if (!container) return;
+  container.innerHTML = '';
+
+  LEVELS_DATABASE.forEach(lvl => {
+    const isCurrent = (lvl.id === UserProfile.currentLevelId);
+    const card = document.createElement('div');
+    card.style.cssText = `
+      border-radius: 14px;
+      padding: 14px;
+      cursor: ${lvl.unlocked ? 'pointer' : 'not-allowed'};
+      background: ${lvl.unlocked ? (isCurrent ? 'rgba(0, 119, 182, 0.45)' : 'rgba(30, 41, 59, 0.85)') : 'rgba(15, 23, 42, 0.7)'};
+      border: 2px solid ${lvl.unlocked ? (isCurrent ? '#00f3ff' : 'rgba(255,255,255,0.18)') : 'rgba(255,255,255,0.06)'};
+      box-shadow: ${isCurrent ? '0 0 20px rgba(0, 243, 255, 0.4)' : 'none'};
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      opacity: ${lvl.unlocked ? 1 : 0.55};
+      transition: all 0.2s ease;
+    `;
+
+    card.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-family:'Orbitron'; font-weight:800; font-size:12px; color:#ffb703;">STAGE 0${lvl.id}</span>
+        <span style="font-size:12px;">${lvl.unlocked ? (isCurrent ? '⚡ SEDANG AKTIF' : '⭐') : '🔒 TERKUNCI'}</span>
+      </div>
+      <div style="font-family:'Orbitron'; font-weight:800; font-size:14px; color:#fff;">${lvl.name}</div>
+      <div style="font-size:11px; color:#94a3b8;">${lvl.subtitle}</div>
+      <div style="display:flex; justify-content:space-between; margin-top:6px; font-size:11px;">
+        <span style="color:#90e0ef;">SASARAN: ${lvl.targetDistance}m</span>
+        <span style="color:#2ec4b6; font-weight:bold;">+$${lvl.reward.toLocaleString()}</span>
+      </div>
+    `;
+
+    if (lvl.unlocked) {
+      card.addEventListener('click', () => {
+        UserProfile.currentLevelId = lvl.id;
+        renderLevelCards();
+        startRace();
+      });
+    }
+
+    container.appendChild(card);
+  });
+}
+
+function triggerGameOver() {
+  gameActive = false;
+  sfx.playCrash();
+
+  UserProfile.credits += Math.floor(earnedCash);
+
+  document.getElementById('gameHUD').classList.add('hidden');
+  document.getElementById('mobileControls').classList.add('hidden');
+  document.getElementById('gameOverScreen').classList.remove('hidden');
+
+  document.getElementById('resDistance').innerText = Math.round(distanceTraveled) + ' m';
+  document.getElementById('resCash').innerText = '+$' + Math.floor(earnedCash);
+}
+
+function openGarage() {
+  gameActive = false;
+  inGarageMode = true;
+
+  document.getElementById('menuScreen').classList.add('hidden');
+  document.getElementById('gameOverScreen').classList.add('hidden');
+  document.getElementById('garageScreen').classList.remove('hidden');
+  document.getElementById('mobileControls').classList.add('hidden');
+
+  renderGarageCards();
+  renderTrackSelector();
+}
+
+// Render Kad Kereta dalam Garage
+function renderGarageCards() {
+  document.getElementById('garageCredits').innerText = `$${UserProfile.credits.toLocaleString()}`;
+
+  const container = document.getElementById('carCardsContainer');
+  container.innerHTML = '';
+
+  CAR_DATABASE.forEach(car => {
+    const isSelected = car.id === UserProfile.selectedCarId;
+    const card = document.createElement('div');
+    card.className = `car-card-visual ${isSelected ? 'active' : ''}`;
+
+    // Mini Canvas Preview untuk Kereta
+    const canvasId = `prev_${car.id}`;
+    card.innerHTML = `
+      <div class="car-preview-canvas">
+        <canvas id="${canvasId}" width="180" height="85"></canvas>
+      </div>
+      <div style="font-family:'Orbitron'; font-weight:800; font-size:12px; color:#fff; margin-top:4px;">${car.name}</div>
+      <div style="font-size:10px; color:#94a3b8;">${car.type}</div>
+      <div style="font-size:11px; color:#38bdf8; font-weight:700;">KELAJUAN: ${car.baseSpeed} KM/H</div>
+      <div style="margin-top:4px;">
+        ${car.unlocked 
+          ? `<span style="font-size:10px; color:#2ec4b6; font-weight:bold;">TERSEDIA</span>`
+          : `<button class="cyber-btn" style="padding:4px 8px; font-size:10px;" onclick="buyCar('${car.id}')">BELI $${car.cost.toLocaleString()}</button>`}
+      </div>
+    `;
+
+    card.addEventListener('click', () => {
+      if (car.unlocked) {
+        UserProfile.selectedCarId = car.id;
+        renderGarageCards();
+      }
+    });
+
+    container.appendChild(card);
+
+    // Lukis preview kereta dalam mini canvas
+    setTimeout(() => {
+      const pCan = document.getElementById(canvasId);
+      if (pCan) {
+        const pCtx = pCan.getContext('2d');
+        pCtx.clearRect(0, 0, 180, 85);
+        ctx.save();
+        // Alih konteks sementara ke pCtx
+        const tempCtx = window.ctx;
+        window.ctx = pCtx;
+        renderCarSprite(90, 70, 0.45, isSelected ? UserProfile.carColor : '#ffffff', false, 0, car.style);
+        window.ctx = tempCtx;
+        ctx.restore();
+      }
+    }, 50);
+  });
+
+  // Render Warna Cat
+  const colorBox = document.getElementById('garageColorList');
+  colorBox.innerHTML = '';
+  BODY_COLORS.forEach(c => {
+    const sw = document.createElement('div');
+    sw.className = `swatch ${UserProfile.carColor === c ? 'active' : ''}`;
+    sw.style.backgroundColor = c;
+    sw.addEventListener('click', () => {
+      UserProfile.carColor = c;
+      renderGarageCards();
+    });
+    colorBox.appendChild(sw);
+  });
+}
+
+// Render Pemilihan Trek
+function renderTrackSelector() {
+  const container = document.getElementById('trackSelectorContainer');
+  if (!container) return;
+  container.innerHTML = '';
+
+  TRACK_DATABASE.forEach(track => {
+    const isSelected = track.id === UserProfile.selectedTrackId;
+    const card = document.createElement('div');
+    card.style.cssText = `
+      flex: 0 0 170px;
+      padding: 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      border: 2px solid ${isSelected ? '#00f3ff' : 'rgba(255,255,255,0.15)'};
+      background: ${isSelected ? 'rgba(0, 119, 182, 0.4)' : 'rgba(30, 41, 59, 0.8)'};
+      box-shadow: ${isSelected ? '0 0 18px rgba(0, 243, 255, 0.45)' : 'none'};
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      transition: all 0.2s ease;
+    `;
+
+    card.innerHTML = `
+      <div style="font-size:22px;">${track.icon}</div>
+      <div style="font-family:'Orbitron'; font-size:11px; font-weight:800; color:#fff;">${track.name}</div>
+      <div style="font-size:9px; color:#cbd5e1;">${track.subtitle}</div>
+    `;
+
+    card.addEventListener('click', () => {
+      UserProfile.selectedTrackId = track.id;
+      renderTrackSelector();
+    });
+
+    container.appendChild(card);
+  });
+}
+
+window.buyCar = function(carId) {
+  const car = CAR_DATABASE.find(c => c.id === carId);
+  if (UserProfile.credits >= car.cost) {
+    UserProfile.credits -= car.cost;
+    car.unlocked = true;
+    UserProfile.selectedCarId = car.id;
+    renderGarageCards();
+  }
+};
+
+// ================= CONTROLS (DESKTOP & SMARTPHONE) =================
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
+  if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
+  if (e.code === 'KeyW' || e.code === 'ArrowUp') keys.gas = true;
+  if (e.code === 'KeyS' || e.code === 'ArrowDown') keys.brake = true;
+  if (e.code === 'Space') {
+    if (!nitroActive && gameActive) sfx.playPurge();
+    keys.nos = true;
+  }
+});
+
+window.addEventListener('keyup', (e) => {
+  if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = false;
+  if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = false;
+  if (e.code === 'KeyW' || e.code === 'ArrowUp') keys.gas = false;
+  if (e.code === 'KeyS' || e.code === 'ArrowDown') keys.brake = false;
+  if (e.code === 'Space') keys.nos = false;
+});
+
+// Bind On-Screen Touch Buttons
+function bindTouch(id, keyProp, onStart = null) {
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  const press = (e) => {
+    if (e.cancelable) e.preventDefault();
+    keys[keyProp] = true;
+    el.classList.add('pressed');
+    if (onStart) onStart();
+  };
+
+  const release = (e) => {
+    if (e.cancelable) e.preventDefault();
+    keys[keyProp] = false;
+    el.classList.remove('pressed');
+  };
+
+  el.addEventListener('touchstart', press, { passive: false });
+  el.addEventListener('touchend', release, { passive: false });
+  el.addEventListener('touchcancel', release, { passive: false });
+  el.addEventListener('mousedown', press);
+  el.addEventListener('mouseup', release);
+  el.addEventListener('mouseleave', release);
+}
+
+bindTouch('touchLeft', 'left');
+bindTouch('touchRight', 'right');
+bindTouch('touchGas', 'gas');
+bindTouch('touchBrake', 'brake');
+bindTouch('touchNos', 'nos', () => {
+  if (!nitroActive && gameActive) sfx.playPurge();
+});
+
+// UI Navigation
+document.getElementById('btnPlay').addEventListener('click', startRace);
+document.getElementById('btnLevels').addEventListener('click', openLevelSelector);
+document.getElementById('btnBackFromLevels').addEventListener('click', () => {
+  document.getElementById('levelScreen').classList.add('hidden');
+  document.getElementById('menuScreen').classList.remove('hidden');
+});
+document.getElementById('btnGarage').addEventListener('click', openGarage);
+document.getElementById('btnBackMenu').addEventListener('click', () => {
+  document.getElementById('garageScreen').classList.add('hidden');
+  document.getElementById('menuScreen').classList.remove('hidden');
+  inGarageMode = false;
+});
+document.getElementById('btnGarageRace').addEventListener('click', startRace);
+document.getElementById('btnRestart').addEventListener('click', startRace);
+document.getElementById('btnGameOverLevels').addEventListener('click', openLevelSelector);
+document.getElementById('btnGameOverGarage').addEventListener('click', openGarage);
+
+document.getElementById('btnNextLevel').addEventListener('click', () => {
+  const currentLvl = LEVELS_DATABASE.find(l => l.id === UserProfile.currentLevelId);
+  const nextLvl = LEVELS_DATABASE.find(l => l.id === currentLvl.id + 1);
+  if (nextLvl && nextLvl.unlocked) {
+    UserProfile.currentLevelId = nextLvl.id;
+    startRace();
+  } else {
+    openLevelSelector();
+  }
+});
+document.getElementById('btnVictoryGarage').addEventListener('click', openGarage);
+
+// Start Loop
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
